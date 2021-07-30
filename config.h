@@ -5,8 +5,14 @@
  *
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
-static char *font = "Liberation Mono:pixelsize=12:antialias=true:autohint=true";
-static int borderpx = 2;
+static char *font = "canele:pixelsize=9:antialias=false:autohint=false";
+
+/* disable bold, italic and roman fonts globally */
+int disablebold = 1;
+int disableitalic = 0;
+int disableroman = 0;
+
+static int borderpx = 1;
 
 /*
  * What program is execed by st depends of these precedence rules:
@@ -16,7 +22,7 @@ static int borderpx = 2;
  * 4: value of shell in /etc/passwd
  * 5: value of shell in config.h
  */
-static char *shell = "/bin/sh";
+static char *shell = "/bin/bash";
 char *utmp = NULL;
 /* scroll program: to enable use a string like "scroll" */
 char *scroll = NULL;
@@ -26,8 +32,8 @@ char *stty_args = "stty raw pass8 nl -echo -iexten -cstopb 38400";
 char *vtiden = "\033[?6c";
 
 /* Kerning / character bounding-box multipliers */
-static float cwscale = 1.0;
-static float chscale = 1.0;
+static float cwscale = 1.1;
+static float chscale = 1.4;
 
 /*
  * word delimiter string
@@ -95,31 +101,22 @@ unsigned int tabspaces = 8;
 
 /* Terminal colors (16 first used in escape sequence) */
 static const char *colorname[] = {
-	/* 8 normal colors */
-	"black",
-	"red3",
-	"green3",
-	"yellow3",
-	"blue2",
-	"magenta3",
-	"cyan3",
-	"gray90",
-
-	/* 8 bright colors */
-	"gray50",
-	"red",
-	"green",
-	"yellow",
-	"#5c5cff",
-	"magenta",
-	"cyan",
-	"white",
-
-	[255] = 0,
-
-	/* more colors can be added after 255 to use with DefaultXX */
-	"#cccccc",
-	"#555555",
+		"#292D3E",
+		"#f07178",
+		"#c3e88d",
+		"#ffcb6b",
+		"#82aaff",
+		"#c792ea",
+		"#89ddff",
+		"#d0d0d0",
+		"#434758",
+		"#ff8b92",
+		"#ddffa7",
+		"#ffe585",
+		"#9cc4ff",
+		"#e1acff",
+		"#a3f7ff",
+		"#ffffff",
 };
 
 
@@ -127,10 +124,10 @@ static const char *colorname[] = {
  * Default colors (colorname index)
  * foreground, background, cursor, reverse cursor
  */
-unsigned int defaultfg = 7;
+unsigned int defaultfg = 15;
 unsigned int defaultbg = 0;
-static unsigned int defaultcs = 256;
-static unsigned int defaultrcs = 257;
+static unsigned int defaultcs = 15;
+static unsigned int defaultrcs = 0;
 
 /*
  * Default shape of cursor

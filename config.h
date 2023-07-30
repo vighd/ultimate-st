@@ -5,19 +5,7 @@
  *
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
-static char *font = "canele:pixelsize=10:antialias=false:autohint=true";
-/* Spare fonts */
-//static char *font2[] = {"UbuntuMono Nerd Font:pixelsize=12:antialias=false:autohint=true"};
-static char *font2[] = {
-	"sundae:pixelsize=10:antialias=false:autohint=true",
-	"waffle:pixelsize=10:antialias=false:autohint=true",
-};
-
-/* disable bold, italic and roman fonts globally */
-int disablebold = 1;
-int disableitalic = 0;
-int disableroman = 0;
-
+static char *font = "TerminessNerdFont:pixelsize=12:antialias=true:autohint=true";
 static int borderpx = 1;
 
 /*
@@ -57,7 +45,7 @@ int allowaltscreen = 1;
 
 /* allow certain non-interactive (insecure) window operations such as:
    setting the clipboard text */
-int allowwindowops = 0;
+int allowwindowops = 1;
 
 /*
  * draw latency range in ms - from new content/keypress/etc until drawing.
@@ -78,18 +66,6 @@ static unsigned int blinktimeout = 800;
  * thickness of underline and bar cursors
  */
 static unsigned int cursorthickness = 2;
-
-/*
- * 1: render most of the lines/blocks characters without using the font for
- *    perfect alignment between cells (U2500 - U259F except dashes/diagonals).
- *    Bold affects lines thickness if boxdraw_bold is not 0. Italic is ignored.
- * 0: disable (render all U25XX glyphs normally from the font).
- */
-const int boxdraw = 1;
-const int boxdraw_bold = 0;
-
-/* braille (U28XX):  1: render as adjacent "pixels",  0: use font */
-const int boxdraw_braille = 0;
 
 /*
  * bell volume. It must be a value between -100 and 100. Use 0 for disabling
@@ -119,22 +95,33 @@ unsigned int tabspaces = 8;
 
 /* Terminal colors (16 first used in escape sequence) */
 static const char *colorname[] = {
-		"#292D3E",
-		"#f07178",
-		"#c3e88d",
-		"#ffcb6b",
-		"#82aaff",
-		"#c792ea",
-		"#89ddff",
-		"#d0d0d0",
-		"#434758",
-		"#ff8b92",
-		"#ddffa7",
-		"#ffe585",
-		"#9cc4ff",
-		"#e1acff",
-		"#a3f7ff",
-		"#ffffff",
+	/* 8 normal colors */
+  "#282c34",
+  "#e06c75",
+  "#98c379",
+  "#d19a66",
+  "#61afef",
+  "#c678dd",
+  "#56b6c2",
+  "#abb2bf",
+
+	/* 8 bright colors */
+  "#5c6370",
+  "#e06c75",
+  "#98c379",
+  "#d19a66",
+  "#61afef",
+  "#c678dd",
+  "#56b6c2",
+  "#ffffff",
+
+	[255] = 0,
+
+	/* more colors can be added after 255 to use with DefaultXX */
+	"#cccccc",
+	"#555555",
+	"#abb2bf", /* default foreground colour */
+	"#242b38", /* default background colour */
 };
 
 
@@ -142,10 +129,10 @@ static const char *colorname[] = {
  * Default colors (colorname index)
  * foreground, background, cursor, reverse cursor
  */
-unsigned int defaultfg = 15;
-unsigned int defaultbg = 0;
-static unsigned int defaultcs = 15;
-static unsigned int defaultrcs = 0;
+unsigned int defaultfg = 258;
+unsigned int defaultbg = 259;
+unsigned int defaultcs = 256;
+static unsigned int defaultrcs = 257;
 
 /*
  * Default shape of cursor
@@ -176,9 +163,6 @@ static unsigned int mousebg = 0;
  */
 static unsigned int defaultattr = 11;
 
-/* Mouse scroll speed */
-const unsigned int mousescrollincrement = 5;
-
 /*
  * Force mouse select/shortcuts while mask is active (when MODE_MOUSE is set).
  * Note that if you want to use ShiftMask with selmasks, set this to an other
@@ -190,15 +174,16 @@ static uint forcemousemod = ShiftMask;
  * Internal mouse shortcuts.
  * Beware that overloading Button1 will disable the selection.
  */
+const unsigned int mousescrollincrement = 5;
 static MouseShortcut mshortcuts[] = {
 	/* mask                 button   function        argument       release */
-	{ ShiftMask,            Button4, kscrollup,      {.i = mousescrollincrement} },
-	{ ShiftMask,            Button5, kscrolldown,    {.i = mousescrollincrement} },
-	{ XK_ANY_MOD,           Button2, selpaste,       {.i = 0},      1 },
-	{ ShiftMask,            Button4, ttysend,        {.s = "\033[5;2~"} },
-	{ XK_ANY_MOD,           Button4, ttysend,        {.s = "\031"} },
-	{ ShiftMask,            Button5, ttysend,        {.s = "\033[6;2~"} },
-	{ XK_ANY_MOD,           Button5, ttysend,        {.s = "\005"} },
+	{ XK_ANY_MOD,           Button4, kscrollup,      {.i = mousescrollincrement}  },
+	{ XK_ANY_MOD,           Button5, kscrolldown,    {.i = mousescrollincrement}  },
+	{ XK_ANY_MOD,           Button2, selpaste,       {.i = 0},                   1},
+	{ ShiftMask,            Button4, ttysend,        {.s = "\033[5;2~"}           },
+	{ XK_ANY_MOD,           Button4, ttysend,        {.s = "\031"}                },
+	{ ShiftMask,            Button5, ttysend,        {.s = "\033[6;2~"}           },
+	{ XK_ANY_MOD,           Button5, ttysend,        {.s = "\005"}                },
 };
 
 /* Internal keyboard shortcuts. */
@@ -206,22 +191,22 @@ static MouseShortcut mshortcuts[] = {
 #define TERMMOD (ControlMask|ShiftMask)
 
 static Shortcut shortcuts[] = {
-	/* mask                 keysym          function        argument */
-	{ XK_ANY_MOD,           XK_Break,       sendbreak,      {.i =  0} },
-	{ ControlMask,          XK_Print,       toggleprinter,  {.i =  0} },
-	{ ShiftMask,            XK_Print,       printscreen,    {.i =  0} },
-	{ XK_ANY_MOD,           XK_Print,       printsel,       {.i =  0} },
-	{ TERMMOD,              XK_plus,       	zoom,           {.f = +1} },
-	{ TERMMOD,              XK_minus,       zoom,           {.f = -1} },
-	{ TERMMOD,              XK_equal,       zoomreset,      {.f =  0} },
-	{ TERMMOD,              XK_C,           clipcopy,       {.i =  0} },
-	{ TERMMOD,              XK_V,           clippaste,      {.i =  0} },
-	{ TERMMOD,              XK_Y,           selpaste,       {.i =  0} },
-	{ ShiftMask,            XK_Insert,      selpaste,       {.i =  0} },
-	{ TERMMOD,              XK_Num_Lock,    numlock,        {.i =  0} },
-	{ TERMMOD,              XK_T,    				newterm,        {.i =  0} },
-	{ ShiftMask,            XK_Page_Up,     kscrollup,      {.i = -1} },
-	{ ShiftMask,            XK_Page_Down,   kscrolldown,    {.i = -1} },
+	/* mask                   keysym          function        argument */
+	{ XK_ANY_MOD,             XK_Break,       sendbreak,      {.i =  0} },
+	{ ControlMask,            XK_Print,       toggleprinter,  {.i =  0} },
+	{ ShiftMask,              XK_Print,       printscreen,    {.i =  0} },
+	{ XK_ANY_MOD,             XK_Print,       printsel,       {.i =  0} },
+	{ TERMMOD,                XK_Prior,       zoom,           {.f = +1} },
+	{ TERMMOD,                XK_Next,        zoom,           {.f = -1} },
+	{ TERMMOD,                XK_Home,        zoomreset,      {.f =  0} },
+	{ TERMMOD,                XK_C,           clipcopy,       {.i =  0} },
+	{ TERMMOD,                XK_V,           clippaste,      {.i =  0} },
+	{ TERMMOD,                XK_Y,           selpaste,       {.i =  0} },
+	{ ShiftMask,              XK_Insert,      selpaste,       {.i =  0} },
+	{ TERMMOD,                XK_Num_Lock,    numlock,        {.i =  0} },
+	{ ShiftMask,              XK_Page_Up,     kscrollup,      {.i = -1} },
+	{ ShiftMask,              XK_Page_Down,   kscrolldown,    {.i = -1} },
+	{ TERMMOD,                XK_T,           newterm,        {.i =  0} },
 };
 
 /*
@@ -299,8 +284,8 @@ static Key key[] = {
 	{ XK_KP_Delete,     ControlMask,    "\033[3;5~",    +1,    0},
 	{ XK_KP_Delete,     ShiftMask,      "\033[2K",      -1,    0},
 	{ XK_KP_Delete,     ShiftMask,      "\033[3;2~",    +1,    0},
+	{ XK_KP_Delete,     XK_ANY_MOD,     "\033[P",       -1,    0},
 	{ XK_KP_Delete,     XK_ANY_MOD,     "\033[3~",      +1,    0},
-	{ XK_KP_Delete,     XK_ANY_MOD,     "\033[3~",      -1,    0},
 	{ XK_KP_Multiply,   XK_ANY_MOD,     "\033Oj",       +2,    0},
 	{ XK_KP_Add,        XK_ANY_MOD,     "\033Ok",       +2,    0},
 	{ XK_KP_Enter,      XK_ANY_MOD,     "\033OM",       +2,    0},
@@ -367,8 +352,8 @@ static Key key[] = {
 	{ XK_Delete,        ControlMask,    "\033[3;5~",    +1,    0},
 	{ XK_Delete,        ShiftMask,      "\033[2K",      -1,    0},
 	{ XK_Delete,        ShiftMask,      "\033[3;2~",    +1,    0},
+	{ XK_Delete,        XK_ANY_MOD,     "\033[P",       -1,    0},
 	{ XK_Delete,        XK_ANY_MOD,     "\033[3~",      +1,    0},
-	{ XK_Delete,        XK_ANY_MOD,     "\033[3~",      -1,    0},
 	{ XK_BackSpace,     XK_NO_MOD,      "\177",          0,    0},
 	{ XK_BackSpace,     Mod1Mask,       "\033\177",      0,    0},
 	{ XK_Home,          ShiftMask,      "\033[2J",       0,   -1},
